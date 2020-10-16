@@ -24,8 +24,8 @@ app.get('/', (request, response) => {
  * Dashboard route
  */
 app.get('/dashboard', verifyToken, (request, response) => {
-    jwt.verify(request.token, 'the_secret_key', err => {
-        if (err) {
+    jwt.verify(request.token, 'the_secret_key', error => {
+        if (error) {
             response.sendStatus(401)
         } else {
             response.json({
@@ -39,33 +39,31 @@ app.get('/dashboard', verifyToken, (request, response) => {
  * Register route
  */
 app.post('/register', (request, response) => {
-    if (request.body) {
-        const user = {
-            name: request.body.name,
-            email: request.body.email,
-            password: request.body.password
-        }
-
-        var data = JSON.stringify(user, null, 2)
-
-        fs.writeFile('db/user.json', data, err => {
-            if (err) {
-                console.log(err)
-            } else {
-                console.log('Added user to user.json')
-            }
-        })
-
-        const token = jwt.sign({ user }, 'the_secret_key')
-
-        response.json({
-            token,
-            email: user.email,
-            name: user.name
-        })
-    } else {
-        response.sendStatus(401)
+    const user = {
+        name: request.body.name,
+        email: request.body.email,
+        password: request.body.password
     }
+
+    var userData = JSON.stringify(user, null, 2)
+
+    let dbUserEmail = require('./db/user.json').email
+
+    if (dbUserEmail == user.email) {
+        response.status(400).json({ error: 'User already exists.' }).end()
+    }
+
+    fs.writeFile('db/user.json', userData, error => {
+        console.log('Added user to user.json')
+    })
+
+    const token = jwt.sign({ user }, 'the_secret_key')
+
+    response.json({
+        name: user.name,
+        email: user.email,
+        token,
+    })
 })
 
 /**
@@ -76,16 +74,16 @@ app.post('/login', (request, response) => {
 
     var userInfo = JSON.parse(userDB)
 
-    if (request.body && request.body.email === userInfo.email && request.body.password === userInfo.password) {
+    if (request.body.email === userInfo.email && request.body.password === userInfo.password) {
         const token = jwt.sign({ userInfo }, 'the_secret_key')
 
         response.json({
-            token,
+            name: userInfo.name,
             email: userInfo.email,
-            name: userInfo.name
+            token,
         })
     } else {
-        response.sendStatus(401)
+        response.status(401).json({ error: 'Invalid login.' })
     }
 })
 

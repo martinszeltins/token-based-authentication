@@ -4,15 +4,37 @@
             Home
         </router-link>
 
-        <router-link to="/dashboard">
+        <router-link v-if="loggedIn" to="/dashboard">
             Dashboard
         </router-link>
+
+        <router-link v-if="!loggedIn" to="/login" class="button">
+            Login
+        </router-link>
+
+        <button v-else class="logoutButton" @click="logout">
+            Logout
+        </button>
     </div>
 </template>
 
 <script>
     export default {
+        methods:
+        {
+            logout()
+            {
+                this.$store.dispatch('logout')
+            },
+        },
 
+        computed:
+        {
+            loggedIn()
+            {
+                return this.$store.getters.loggedIn
+            },
+        },
     }
 </script>
 
