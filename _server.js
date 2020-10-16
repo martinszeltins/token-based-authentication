@@ -1,8 +1,8 @@
+var fs = require('fs')
+var cors = require('cors')
 var express = require('express')
 var jwt = require('jsonwebtoken')
-var cors = require('cors')
 var bodyParser = require('body-parser')
-var fs = require('fs')
 var events = require('./db/events.json')
 
 const app = express()
@@ -14,8 +14,8 @@ app.use(bodyParser.json())
 /**
  * Index route
  */
-app.get('/', (req, res) => {
-    res.json({
+app.get('/', (request, response) => {
+    response.json({
         message: 'Welcome to the API.'
     })
 })
@@ -23,12 +23,12 @@ app.get('/', (req, res) => {
 /**
  * Dashboard route
  */
-app.get('/dashboard', verifyToken, (req, res) => {
-    jwt.verify(req.token, 'the_secret_key', err => {
+app.get('/dashboard', verifyToken, (request, response) => {
+    jwt.verify(request.token, 'the_secret_key', err => {
         if (err) {
-            res.sendStatus(401)
+            response.sendStatus(401)
         } else {
-            res.json({
+            response.json({
                 events: events
             })
         }
@@ -38,12 +38,12 @@ app.get('/dashboard', verifyToken, (req, res) => {
 /**
  * Register route
  */
-app.post('/register', (req, res) => {
-    if (req.body) {
+app.post('/register', (request, response) => {
+    if (request.body) {
         const user = {
-            name: req.body.name,
-            email: req.body.email,
-            password: req.body.password
+            name: request.body.name,
+            email: request.body.email,
+            password: request.body.password
         }
 
         var data = JSON.stringify(user, null, 2)
@@ -58,51 +58,51 @@ app.post('/register', (req, res) => {
 
         const token = jwt.sign({ user }, 'the_secret_key')
 
-        res.json({
+        response.json({
             token,
             email: user.email,
             name: user.name
         })
     } else {
-        res.sendStatus(401)
+        response.sendStatus(401)
     }
 })
 
 /**
  * Login route
  */
-app.post('/login', (req, res) => {
+app.post('/login', (request, response) => {
     var userDB = fs.readFileSync('./db/user.json')
 
     var userInfo = JSON.parse(userDB)
 
-    if (req.body && req.body.email === userInfo.email && req.body.password === userInfo.password) {
+    if (request.body && request.body.email === userInfo.email && request.body.password === userInfo.password) {
         const token = jwt.sign({ userInfo }, 'the_secret_key')
 
-        res.json({
+        response.json({
             token,
             email: userInfo.email,
             name: userInfo.name
         })
     } else {
-        res.sendStatus(401)
+        response.sendStatus(401)
     }
 })
 
 /**
  * Verify token
  */
-function verifyToken (req, res, next)
+function verifyToken (request, response, next)
 {
-    const bearerHeader = req.headers['authorization']
+    const bearerHeader = request.headers['authorization']
 
     if (typeof bearerHeader !== 'undefined') {
         const bearer = bearerHeader.split(' ')
         const bearerToken = bearer[1]
-        req.token = bearerToken
+        request.token = bearerToken
         next()
     } else {
-        res.sendStatus(401)
+        response.sendStatus(401)
     }
 }
 
